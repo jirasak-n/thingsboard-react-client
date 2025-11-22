@@ -1,5 +1,5 @@
 import { ThingsboardClient } from '../ThingsboardClient';
-import { TelemetrySubscriber, SubscriptionCmd, WebsocketDataMsg } from '../model/telemetry';
+import { TelemetrySubscriber, SubscriptionCmd, WebsocketDataMsg, WsCmdType, WebsocketCmd } from '../model/telemetry';
 
 const RECONNECT_INTERVAL = 2000;
 const WS_IDLE_TIMEOUT = 90000;
@@ -42,11 +42,36 @@ export class TelemetryWebsocketService {
     if (this.isActive) {
       subscriber.subscriptionCommands.forEach((cmd) => {
         if (cmd.cmdId) {
-          const unsubscribeCmd: SubscriptionCmd = {
+          let unsubscribeType = WsCmdType.ENTITY_DATA_UNSUBSCRIBE; // Default fallback
+          
+          // Map subscribe type to unsubscribe type
+          switch (cmd.type) {
+             case WsCmdType.ALARM_DATA: 
+                unsubscribeType = WsCmdType.ALARM_DATA_UNSUBSCRIBE; 
+                break;
+             case WsCmdType.ENTITY_COUNT:
+                unsubscribeType = WsCmdType.ENTITY_COUNT_UNSUBSCRIBE;
+                break;
+             case WsCmdType.NOTIFICATIONS:
+                unsubscribeType = WsCmdType.NOTIFICATIONS_UNSUBSCRIBE;
+                break;
+             // Attributes/Timeseries use the same command with unsubscribe=true flag
+             case WsCmdType.ATTRIBUTES:
+             case WsCmdType.TIMESERIES:
+                // Special handling for TS/Attr: keep original type but add unsubscribe flag
+                const tsUnsubCmd: SubscriptionCmd = {
+                    cmdId: cmd.cmdId,
+                    type: cmd.type,
+                    unsubscribe: true
+                };
+                this.cmdQueue.push(tsUnsubCmd);
+                this.subscribersMap.delete(cmd.cmdId);
+                return; // Done for this cmd
+          }
+
+          const unsubscribeCmd: WebsocketCmd = {
             cmdId: cmd.cmdId,
-            entityType: cmd.entityType,
-            entityId: cmd.entityId,
-            unsubscribe: true
+            type: unsubscribeType
           };
           this.cmdQueue.push(unsubscribeCmd);
           this.subscribersMap.delete(cmd.cmdId);
@@ -64,23 +89,14 @@ export class TelemetryWebsocketService {
 
   private publishCommands() {
     while (this.isOpened && this.cmdQueue.length > 0) {
-      // Send all pending commands
-      const cmds = this.cmdQueue.splice(0, 10); // Batch 10 at a time
-      
-      // Construct payload in new V2/V3 format: { cmds: [ { type: '...', ... } ] }
+      const cmds = this.cmdQueue.splice(0, 10);
       
       const payloadCmds = cmds.map(cmd => {
           const newCmd: any = { ...cmd };
-          
-          // Determine type if not present (though our SubscriptionCmd usually has it from hook)
           if (!newCmd.type) {
-              // Fallback logic (should ideally be set by caller)
+              // Fallback for legacy calls without explicit type
               if (cmd.keys && cmd.scope) {
-                  // likely timeseries or attributes
-                  newCmd.type = 'TIMESERIES'; // Default
-              } else if (cmd.unsubscribe) {
-                  // If original type missing, default to TIMESERIES as that's most common.
-                  newCmd.type = 'TIMESERIES';
+                  newCmd.type = WsCmdType.TIMESERIES;
               }
           }
           return newCmd;
@@ -149,7 +165,6 @@ export class TelemetryWebsocketService {
     this.isOpening = false;
     this.isOpened = true;
     
-    // Authenticate immediately
     const authCmd = {
       authCmd: {
         cmdId: 0,
@@ -178,16 +193,29 @@ export class TelemetryWebsocketService {
   private onMessage(event: MessageEvent) {
     try {
       const message: WebsocketDataMsg = JSON.parse(event.data);
+      
+      // Determine target subscriber
+      let subscriber: TelemetrySubscriber | undefined;
+      
       if (message.subscriptionId) {
-        const subscriber = this.subscribersMap.get(message.subscriptionId);
-        if (subscriber) {
-          subscriber.onData(message);
-        }
+        subscriber = this.subscribersMap.get(message.subscriptionId);
       } else if (message.cmdId) {
-         const subscriber = this.subscribersMap.get(message.cmdId);
-         if (subscriber) {
-           subscriber.onData(message);
-         }
+        subscriber = this.subscribersMap.get(message.cmdId);
+      }
+
+      if (subscriber) {
+          // Dispatch based on message type
+          if (message.cmdUpdateType) {
+              // Complex update (Entity Data, Alarm Data, etc.)
+              if (subscriber.onCmdUpdate) {
+                  subscriber.onCmdUpdate(message);
+              }
+          } else {
+              // Standard Telemetry/Attribute update
+              if (subscriber.onData) {
+                  subscriber.onData(message);
+              }
+          }
       }
     } catch (e) {
       console.error('Failed to process websocket message', e);
@@ -208,7 +236,6 @@ export class TelemetryWebsocketService {
          this.subscribersMap.forEach((sub) => {
            this.reconnectSubscribers.add(sub);
          });
-         // Reset state
          this.subscribersMap.clear();
          this.isReconnect = true;
        }
@@ -225,4 +252,3 @@ export class TelemetryWebsocketService {
       }
   }
 }
-
