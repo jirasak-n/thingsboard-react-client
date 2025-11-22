@@ -35,6 +35,7 @@ export class TelemetryWebsocketService {
       cmd.cmdId = cmdId;
       this.cmdQueue.push(cmd);
     });
+    this.reconnectSubscribers.add(subscriber); // Track for reconnection
     this.publishCommands();
   }
 
@@ -44,7 +45,6 @@ export class TelemetryWebsocketService {
         if (cmd.cmdId) {
           let unsubscribeType = WsCmdType.ENTITY_DATA_UNSUBSCRIBE; // Default fallback
           
-          // Map subscribe type to unsubscribe type
           switch (cmd.type) {
              case WsCmdType.ALARM_DATA: 
                 unsubscribeType = WsCmdType.ALARM_DATA_UNSUBSCRIBE; 
@@ -55,18 +55,15 @@ export class TelemetryWebsocketService {
              case WsCmdType.NOTIFICATIONS:
                 unsubscribeType = WsCmdType.NOTIFICATIONS_UNSUBSCRIBE;
                 break;
-             // Attributes/Timeseries use the same command with unsubscribe=true flag
              case WsCmdType.ATTRIBUTES:
              case WsCmdType.TIMESERIES:
-                // Special handling for TS/Attr: keep original type but add unsubscribe flag
                 const tsUnsubCmd: SubscriptionCmd = {
-                    cmdId: cmd.cmdId,
-                    type: cmd.type,
+                    ...cmd,
                     unsubscribe: true
                 };
                 this.cmdQueue.push(tsUnsubCmd);
                 this.subscribersMap.delete(cmd.cmdId);
-                return; // Done for this cmd
+                return; 
           }
 
           const unsubscribeCmd: WebsocketCmd = {
@@ -94,7 +91,6 @@ export class TelemetryWebsocketService {
       const payloadCmds = cmds.map(cmd => {
           const newCmd: any = { ...cmd };
           if (!newCmd.type) {
-              // Fallback for legacy calls without explicit type
               if (cmd.keys && cmd.scope) {
                   newCmd.type = WsCmdType.TIMESERIES;
               }
@@ -180,11 +176,18 @@ export class TelemetryWebsocketService {
 
     if (this.isReconnect) {
       this.isReconnect = false;
-      this.reconnectSubscribers.forEach((sub) => {
+      
+      // Copy current subscribers to a temp set to avoid modification issues during iteration
+      const subscribersToReconnect = new Set(this.reconnectSubscribers);
+      
+      // Clear the main set immediately. 
+      // As we call subscribe() for each item, they will be added back to reconnectSubscribers correctly.
+      this.reconnectSubscribers.clear();
+
+      subscribersToReconnect.forEach((sub) => {
         if (sub.onReconnected) sub.onReconnected();
         this.subscribe(sub);
       });
-      this.reconnectSubscribers.clear();
     } else {
       this.publishCommands();
     }
@@ -194,7 +197,14 @@ export class TelemetryWebsocketService {
     try {
       const message: WebsocketDataMsg = JSON.parse(event.data);
       
-      // Determine target subscriber
+      // Critical Error Handling
+      if (message.errorCode && (message.errorCode === 1 || message.errorCode === 2)) {
+          console.warn(`WebSocket Critical Error (${message.errorCode}): ${message.errorMsg}. Forcing Reconnect...`);
+          this.onClose(null); 
+          if (this.socket) this.socket.close();
+          return;
+      }
+
       let subscriber: TelemetrySubscriber | undefined;
       
       if (message.subscriptionId) {
@@ -204,14 +214,11 @@ export class TelemetryWebsocketService {
       }
 
       if (subscriber) {
-          // Dispatch based on message type
           if (message.cmdUpdateType) {
-              // Complex update (Entity Data, Alarm Data, etc.)
               if (subscriber.onCmdUpdate) {
                   subscriber.onCmdUpdate(message);
               }
           } else {
-              // Standard Telemetry/Attribute update
               if (subscriber.onData) {
                   subscriber.onData(message);
               }
@@ -232,11 +239,15 @@ export class TelemetryWebsocketService {
     this.isOpened = false;
     if (this.isActive) {
        if (!this.isReconnect) {
-         this.reconnectSubscribers.clear();
+         // Prepare for reconnect
+         // Move all current subscribers to reconnect list (if not already there)
          this.subscribersMap.forEach((sub) => {
            this.reconnectSubscribers.add(sub);
          });
+         
+         // Clear active map as old IDs are invalid in new session
          this.subscribersMap.clear();
+         
          this.isReconnect = true;
        }
        
@@ -250,5 +261,7 @@ export class TelemetryWebsocketService {
       if (this.socket) {
           this.socket.close();
       }
+      if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+      if (this.socketCloseTimer) clearTimeout(this.socketCloseTimer);
   }
 }
