@@ -12,6 +12,8 @@ import { DeviceService } from './service/DeviceService';
 import { AttributeService } from './service/AttributeService';
 import { OAuth2Service } from './service/OAuth2Service';
 import { AlarmService } from './service/AlarmService';
+import { EventService } from './service/EventService';
+import { EntityQueryService } from './service/EntityQueryService';
 
 export class ThingsboardClient {
   private apiEndpoint: string;
@@ -26,6 +28,8 @@ export class ThingsboardClient {
   private attributeService: AttributeService | null = null;
   private oauth2Service: OAuth2Service | null = null;
   private alarmService: AlarmService | null = null;
+  private eventService: EventService | null = null;
+  private entityQueryService: EntityQueryService | null = null;
 
   private userLoadedCallbacks: Array<() => void> = [];
   private userLoggedOutCallbacks: Array<() => void> = [];
@@ -107,8 +111,19 @@ export class ThingsboardClient {
       return this.alarmService;
   }
 
+  public getEventService(): EventService {
+      if (!this.eventService) {
+          this.eventService = new EventService(this);
+      }
+      return this.eventService;
+  }
 
-
+  public getEntityQueryService(): EntityQueryService {
+      if (!this.entityQueryService) {
+          this.entityQueryService = new EntityQueryService(this);
+      }
+      return this.entityQueryService;
+  }
 
   private setupInterceptors() {
     // Request Interceptor
@@ -264,4 +279,3 @@ export class ThingsboardClient {
       return response.data;
   }
 }
-

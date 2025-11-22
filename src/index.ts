@@ -5,4 +5,6 @@ export * from './service/AttributeService';
 export * from './service/TelemetryWebsocketService';
 export * from './service/OAuth2Service';
 export * from './service/AlarmService';
+export * from './service/EventService';
+export * from './service/EntityQueryService';
 export * from './hooks';

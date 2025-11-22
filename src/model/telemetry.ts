@@ -52,7 +52,7 @@ export interface EntityDataQuery {
   entityFilter: EntityFilter;
   pageLink: EntityDataPageLink;
   entityFields?: EntityField[];
-  latestValues?: EntityKey[]; // Changed from KeyFilter[] to EntityKey[]
+  latestValues?: EntityKey[];
   keyFilters?: KeyFilter[];
 }
 
@@ -75,20 +75,20 @@ export interface EntityDataPageLink {
 }
 
 export interface EntityDataSortOrder {
-  key: string; // e.g., 'name', 'createdTime', or attribute key
+  key: string;
   direction: 'ASC' | 'DESC';
 }
 
 export interface EntityField {
-  type: string; // 'ENTITY_FIELD'
-  keyName: string; // 'name', 'type', 'createdTime', 'label', etc.
+  type: string;
+  keyName: string;
 }
 
 export interface KeyFilter {
-  key: string; // Attribute or Telemetry key
-  valueType: string; // 'STRING', 'NUMERIC', 'BOOLEAN', 'DATE_TIME'
+  key: string;
+  valueType: string;
   value?: any;
-  predicate?: any; // Simplified for now
+  predicate?: any;
 }
 
 export interface EntityHistoryCmd {
@@ -114,8 +114,19 @@ export interface TimeSeriesCmd {
 }
 
 export interface EntityKey {
-  type: string; // 'ATTRIBUTE', 'TIME_SERIES', 'ENTITY_FIELD'
+  type: string;
   key: string;
+}
+
+// --- Entity Count Models ---
+
+export interface EntityCountCmd extends WebsocketCmd {
+  query?: EntityCountQuery;
+}
+
+export interface EntityCountQuery {
+  entityFilter: EntityFilter;
+  keyFilters?: KeyFilter[];
 }
 
 // --- Alarm Data Models ---
@@ -163,6 +174,9 @@ export interface WebsocketDataMsg {
   // Count updates
   count?: number;
   totalUnreadCount?: number;
+  
+  // Notifications
+  notifications?: any[];
 }
 
 // Alias interfaces for specific updates to satisfy hooks
@@ -170,8 +184,8 @@ export interface EntityDataUpdate extends WebsocketDataMsg {}
 export interface AlarmDataUpdate extends WebsocketDataMsg {}
 
 export interface TelemetrySubscriber {
-  subscriptionCommands: Array<SubscriptionCmd | EntityDataCmd | AlarmDataCmd | NotificationsCmd | WebsocketCmd>; // Broaden type
+  subscriptionCommands: Array<SubscriptionCmd | EntityDataCmd | EntityCountCmd | AlarmDataCmd | NotificationsCmd | WebsocketCmd>;
   onData?: (data: WebsocketDataMsg) => void;
-  onCmdUpdate?: (data: WebsocketDataMsg) => void; // New callback for complex updates
+  onCmdUpdate?: (data: WebsocketDataMsg) => void; 
   onReconnected?: () => void;
 }
