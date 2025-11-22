@@ -51,7 +51,7 @@ export interface EntityDataCmd extends WebsocketCmd {
 export interface EntityDataQuery {
   entityFilter: EntityFilter;
   pageLink: EntityDataPageLink;
-  entityFields?: EntityField[];
+  entityFields?: EntityKey[];
   latestValues?: EntityKey[];
   keyFilters?: KeyFilter[];
 }
@@ -75,17 +75,12 @@ export interface EntityDataPageLink {
 }
 
 export interface EntityDataSortOrder {
-  key: string;
+  key: EntityKey;
   direction: 'ASC' | 'DESC';
 }
 
-export interface EntityField {
-  type: string;
-  keyName: string;
-}
-
 export interface KeyFilter {
-  key: string;
+  key: EntityKey; // Changed from string to EntityKey
   valueType: string;
   value?: any;
   predicate?: any;
@@ -138,7 +133,7 @@ export interface AlarmDataCmd extends WebsocketCmd {
 export interface AlarmDataQuery {
   entityFilter?: EntityFilter;
   pageLink?: AlarmDataPageLink;
-  alarmFields?: EntityField[];
+  alarmFields?: EntityKey[];
 }
 
 export interface AlarmDataPageLink extends EntityDataPageLink {
