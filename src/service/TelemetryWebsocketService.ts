@@ -66,40 +66,32 @@ export class TelemetryWebsocketService {
     while (this.isOpened && this.cmdQueue.length > 0) {
       // Send all pending commands
       const cmds = this.cmdQueue.splice(0, 10); // Batch 10 at a time
-      const wrapper = {
-         authCmd: null, // Auth handled on connect usually, but TB protocol allows authCmd
-         cmds: cmds
+      
+      // Construct payload in new V2/V3 format: { cmds: [ { type: '...', ... } ] }
+      
+      const payloadCmds = cmds.map(cmd => {
+          const newCmd: any = { ...cmd };
+          
+          // Determine type if not present (though our SubscriptionCmd usually has it from hook)
+          if (!newCmd.type) {
+              // Fallback logic (should ideally be set by caller)
+              if (cmd.keys && cmd.scope) {
+                  // likely timeseries or attributes
+                  newCmd.type = 'TIMESERIES'; // Default
+              } else if (cmd.unsubscribe) {
+                  // If original type missing, default to TIMESERIES as that's most common.
+                  newCmd.type = 'TIMESERIES';
+              }
+          }
+          return newCmd;
+      });
+
+      const payload = {
+          cmds: payloadCmds
       };
-      // Note: TB WebSocket protocol expects { authCmd: ..., cmds: ... } or just cmds?
-      // Looking at Dart code, it sends just the list of commands if auth is already established?
-      // Dart: _cmdsWrapper.preparePublishCommands sends: { authCmd: {cmdId: 0, token: ...}, cmds: [...] }
-      // We need to be careful here. The dart code sends Auth cmd with every batch if it hasn't been sent?
-      // Let's look at Dart's _cmdsWrapper.preparePublishCommands
-      
-      // Simplified implementation: We will assume we just send what we have. 
-      // But wait, Dart implementation wraps everything in an object that contains 'authCmd' and 'cmds'.
-      
-      // Let's try to construct the message payload correctly.
-      const payload: any = {};
-       // In pure WS protocol for TB, usually first message is Auth, subsequent are cmds.
-       // However, wrapper structure is common.
-       // Let's trust the structure: { tsSubCmds: [], historyCmds: [], attrSubCmds: [] } 
-       // Wait, the new WS API (v2) or old? Dart client uses /api/ws which is the new one (v2+).
-       // The new API expects JSON: { "authCmd": { "cmdId": 0, "token": "..." }, "cmds": [ ... ] }
-       
-       // Since we are inside publishCommands, we assume the socket is open.
-       // We don't need to send Auth again if it was sent on open.
-       
-       // Actually, let's send the commands as an object with keys corresponding to command types if using old API,
-       // OR use the unified structure. 
-       // Dart code uses `TelemetryPluginCmdsWrapper`.
-       
-       // Let's stick to a generic payload structure for now.
-       const data = JSON.stringify({
-          cmds: cmds
-       });
-       
-       this.socket?.send(data);
+
+      const data = JSON.stringify(payload);
+      this.socket?.send(data);
     }
     this.tryOpenSocket();
   }
