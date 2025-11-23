@@ -1,6 +1,6 @@
 {
     "name": "thingsboard-react-client",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "TypeScript/React client library for ThingsBoard IoT Platform with full API coverage",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
