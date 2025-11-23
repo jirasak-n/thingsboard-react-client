@@ -18,12 +18,21 @@ export enum WsCmdType {
   NOTIFICATIONS_UNSUBSCRIBE = 'NOTIFICATIONS_UNSUBSCRIBE'
 }
 
+export enum Aggregation {
+  MIN = 'MIN',
+  MAX = 'MAX',
+  AVG = 'AVG',
+  SUM = 'SUM',
+  COUNT = 'COUNT',
+  NONE = 'NONE'
+}
+
 export interface WebsocketCmd {
   cmdId?: number;
   type: string; // WsCmdType
 }
 
-// --- Telemetry & Attributes (Existing but refined) ---
+// --- Telemetry & Attributes ---
 
 export interface SubscriptionCmd extends WebsocketCmd {
   entityType?: string;
@@ -46,6 +55,8 @@ export interface EntityDataCmd extends WebsocketCmd {
   historyCmd?: EntityHistoryCmd;
   latestCmd?: LatestValueCmd;
   tsCmd?: TimeSeriesCmd;
+  aggHistoryCmd?: AggHistoryCmd;
+  aggTsCmd?: AggTimeSeriesCmd;
 }
 
 export interface EntityDataQuery {
@@ -57,7 +68,7 @@ export interface EntityDataQuery {
 }
 
 export interface EntityFilter {
-  type: string; // 'SINGLE_ENTITY', 'ENTITY_LIST', 'ENTITY_NAME', 'DEVICE_TYPE', etc.
+  type: string;
   singleEntity?: { entityType: string; id: string };
   entityType?: string;
   entityList?: string[];
@@ -80,7 +91,7 @@ export interface EntityDataSortOrder {
 }
 
 export interface KeyFilter {
-  key: EntityKey; // Changed from string to EntityKey
+  key: EntityKey;
   valueType: string;
   value?: any;
   predicate?: any;
@@ -105,7 +116,28 @@ export interface TimeSeriesCmd {
   timeWindow: number;
   interval?: number;
   limit?: number;
-  agg?: string;
+  agg?: string; // Aggregation enum
+}
+
+export interface AggKey {
+  id: number;
+  key: string;
+  agg: string; // Aggregation enum
+  previousStartTs?: number;
+  previousEndTs?: number;
+  previousValueOnly?: boolean;
+}
+
+export interface AggHistoryCmd {
+  keys: AggKey[];
+  startTs: number;
+  endTs: number;
+}
+
+export interface AggTimeSeriesCmd {
+  keys: AggKey[];
+  startTs: number;
+  timeWindow: number;
 }
 
 export interface EntityKey {
