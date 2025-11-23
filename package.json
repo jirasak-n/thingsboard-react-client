@@ -1,27 +1,52 @@
 {
-  "name": "thingsboard-react-client",
-  "version": "0.1.0",
-  "description": "Thingsboard Client Library for React/TypeScript",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "peerDependencies": {
-    "react": ">=16.8.0",
-    "react-dom": ">=16.8.0"
-  },
-  "dependencies": {
-    "axios": "^1.6.0",
-    "jwt-decode": "^4.0.0",
-    "rxjs": "^7.8.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.0.0"
-  }
+    "name": "thingsboard-react-client",
+    "version": "0.1.0",
+    "description": "TypeScript/React client library for ThingsBoard IoT Platform with full API coverage",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "prepublishOnly": "npm run build",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "thingsboard",
+        "iot",
+        "react",
+        "typescript",
+        "client",
+        "websocket",
+        "mqtt",
+        "telemetry",
+        "device-management"
+    ],
+    "author": "Jirasak Nopparat <jirasak.r@me.com>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/jirasak-n/thingsboard-react-client.git"
+    },
+    "homepage": "https://github.com/jirasak-n/thingsboard-react-client#readme",
+    "bugs": {
+        "url": "https://github.com/jirasak-n/thingsboard-react-client/issues"
+    },
+    "peerDependencies": {
+        "react": ">=16.8.0",
+        "react-dom": ">=16.8.0"
+    },
+    "dependencies": {
+        "axios": "^1.6.0",
+        "jwt-decode": "^4.0.0",
+        "rxjs": "^7.8.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.0.0",
+        "@types/node": "^20.0.0",
+        "@types/react": "^18.0.0"
+    }
 }
-

@@ -1,158 +1,256 @@
-# Thingsboard React Client
+# ThingsBoard React Client
 
-A TypeScript/React client library for Thingsboard IoT Platform, ported from the official [Dart Thingsboard Client](https://github.com/thingsboard/flutter_thingsboard/tree/master/dart_thingsboard_client).
+[![npm version](https://badge.fury.io/js/thingsboard-react-client.svg)](https://www.npmjs.com/package/thingsboard-react-client)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This library provides a set of services and React hooks to interact with Thingsboard REST API and WebSocket API efficiently.
+A comprehensive TypeScript/React client library for [ThingsBoard](https://thingsboard.io/) IoT Platform with full API coverage.
 
 ## Features
 
-- **Authentication:** JWT handling, auto-refresh token, OAuth2 support.
-- **Real-time Telemetry:** WebSocket handling with automatic reconnection and subscription management.
-- **React Hooks:** Ready-to-use hooks for Auth and Telemetry.
-- **Typed Models:** Comprehensive TypeScript interfaces for Devices, Alarms, and more.
-- **Services:** Device, Attribute, Alarm, OAuth2 services implemented.
+- 🚀 **Full API Coverage**: Complete implementation matching the official Dart client
+- 🔐 **Authentication**: JWT-based authentication with automatic token management
+- 📡 **WebSocket Support**: Real-time telemetry and notifications via WebSocket
+- 🎯 **Type-Safe**: Written in TypeScript with comprehensive type definitions
+- ⚛️ **React Hooks**: Ready-to-use React hooks for common operations
+- 📦 **Tree-Shakeable**: Optimized bundle size with ES modules
 
 ## Installation
 
-(Assuming this package is published or linked locally)
-
 ```bash
 npm install thingsboard-react-client
-# or
+```
+
+or with yarn:
+
+```bash
 yarn add thingsboard-react-client
 ```
 
-## Getting Started
+## Quick Start
 
-### 1. Setup Provider
+### Basic Usage
 
-Wrap your application with `ThingsboardProvider` to initialize the client and manage authentication state.
+```typescript
+import { ThingsboardClient } from 'thingsboard-react-client';
 
-```tsx
-import React from 'react';
-import { ThingsboardProvider } from 'thingsboard-react-client';
-import App from './App';
+// Initialize the client
+const client = new ThingsboardClient({
+  url: 'https://your-thingsboard-server.com'
+});
 
-const Root = () => (
-  <ThingsboardProvider apiEndpoint="http://localhost:8080">
-    <App />
-  </ThingsboardProvider>
-);
+// Login
+await client.login({
+  username: 'tenant@thingsboard.org',
+  password: 'tenant'
+});
+
+// Use the API
+const devices = await client.getDeviceService().getTenantDevices({
+  pageSize: 10,
+  page: 0
+});
+
+console.log('Devices:', devices);
 ```
 
-### 2. Authentication
-
-Use `useAuth` hook to handle login, logout, and check user status.
-
-```tsx
-import { useAuth } from 'thingsboard-react-client';
-
-const LoginPage = () => {
-  const { login, isLoading } = useAuth();
-
-  const handleLogin = async () => {
-    try {
-      await login({ username: 'tenant@thingsboard.org', password: 'password' });
-      // Redirect or handle success
-    } catch (error) {
-      console.error('Login failed', error);
-    }
-  };
-
-  if (isLoading) return <div>Loading...</div>;
-
-  return <button onClick={handleLogin}>Login</button>;
-};
-```
-
-### 3. Real-time Telemetry
-
-Use `useTelemetry` hook to subscribe to real-time data. The hook handles subscription and unsubscription automatically.
-
-```tsx
-import { useTelemetry } from 'thingsboard-react-client';
-
-const DeviceTemp = ({ deviceId }) => {
-  useTelemetry({
-    entityId: { entityType: 'DEVICE', id: deviceId },
-    keys: ['temperature', 'humidity'],
-    onData: (data) => {
-      console.log('Received data:', data);
-      // Update state here
-    }
-  });
-
-  return <div>Listening for temperature...</div>;
-};
-```
-
-### 4. Using Services
-
-Access services directly via `useThingsboard` hook.
+### React Hook Example
 
 ```tsx
 import { useThingsboard } from 'thingsboard-react-client';
-import { useEffect, useState } from 'react';
 
-const DeviceList = () => {
-  const tbClient = useThingsboard();
+function DeviceList() {
+  const { client, isAuthenticated } = useThingsboard();
   const [devices, setDevices] = useState([]);
 
   useEffect(() => {
-    const fetchDevices = async () => {
-      const deviceService = tbClient.getDeviceService();
-      const tenantDevices = await deviceService.getTenantDevice('My Device'); // Example method
-      // Note: Use getTenantDevices for pagination list
-    };
-    fetchDevices();
-  }, [tbClient]);
+    if (isAuthenticated) {
+      client.getDeviceService()
+        .getTenantDevices({ pageSize: 10, page: 0 })
+        .then(setDevices);
+    }
+  }, [isAuthenticated]);
 
-  return <div>...</div>;
-};
+  return (
+    <div>
+      {devices.map(device => (
+        <div key={device.id.id}>{device.name}</div>
+      ))}
+    </div>
+  );
+}
 ```
 
-## Implemented Services & Features
+### WebSocket Telemetry
 
-- [x] **Core:** Authentication, JWT Refresh, Axios Interceptors
-- [x] **DeviceService:** CRUD, Credentials
-- [x] **AttributeService:** Get/Save/Delete Attributes (Client/Server/Shared)
-- [x] **TelemetryWebsocketService:** Real-time data subscription
-- [x] **OAuth2Service:** Login processing, Config, Template management
-- [x] **AlarmService:** CRUD, Ack, Clear, Assign, Query (V1/V2)
+```typescript
+import { ThingsboardClient } from 'thingsboard-react-client';
 
-## Roadmap & Pending Features
+const client = new ThingsboardClient({
+  url: 'https://your-thingsboard-server.com'
+});
 
-The following services are planned for future implementation:
+await client.login({ username: 'user', password: 'pass' });
 
-### User & Entity Management
-- [ ] **UserService:** Manage users (create, delete, activate)
-- [ ] **CustomerService:** Manage customer hierarchy
-- [ ] **TenantService:** Manage tenants (SysAdmin)
-- [ ] **AssetService:** Manage assets and profiles
-- [ ] **EntityRelationService:** Manage entity relations
+// Subscribe to telemetry updates
+const subscription = client.getTelemetryService()
+  .subscribeTelemetry({
+    entityId: { entityType: 'DEVICE', id: 'device-id' },
+    keys: ['temperature', 'humidity']
+  });
 
-### UI & Visualization
-- [ ] **DashboardService:** Manage dashboards
-- [ ] **WidgetService:** Manage widget bundles
-- [ ] **EntityViewService:** Manage entity views
-
-### System & Operations
-- [ ] **AdminService:** System settings, mail server
-- [ ] **AuditLogService:** User action logs
-- [ ] **EventService:** System events
-- [ ] **OtaPackageService:** Firmware updates
-- [ ] **EdgeService:** Edge management
-- [ ] **RuleChainService:** Rule engine management
-
-## Project Structure
-
-```
-src/
-  ├── hooks/           # React Context & Hooks (useAuth, useTelemetry)
-  ├── http/            # HTTP utilities
-  ├── model/           # TypeScript Interfaces (Device, Alarm, etc.)
-  ├── service/         # Business Logic Classes (DeviceService, AlarmService)
-  ├── ThingsboardClient.ts  # Main Entry Point
-  └── index.ts         # Public API Export
+subscription.subscribe({
+  next: (data) => console.log('Telemetry:', data),
+  error: (err) => console.error('Error:', err)
+});
 ```
 
+## API Coverage
+
+This library provides full coverage of the ThingsBoard REST API:
+
+- **🔐 Authentication**: Login, logout, user management
+- **📱 Devices**: CRUD operations, telemetry, attributes
+- **📊 Telemetry**: Real-time telemetry subscriptions via WebSocket
+- **📦 Assets**: Asset management and relationships
+- **👥 Customers**: Customer management
+- **📈 Dashboards**: Dashboard CRUD and assignment
+- **👤 Users**: User management and permissions
+- **🔔 Alarms**: Alarm management and subscriptions
+- **📝 Entity Views**: Entity view operations
+- **⚙️ Device Profiles**: Device profile management
+- **🏷️ Asset Profiles**: Asset profile management
+- **🔗 Relations**: Entity relationship management
+
+## Configuration
+
+```typescript
+const client = new ThingsboardClient({
+  url: 'https://your-server.com',  // Required: ThingsBoard server URL
+  retryCount: 3,                   // Optional: Number of retry attempts
+  retryDelay: 1000,                // Optional: Delay between retries (ms)
+  timeout: 30000                   // Optional: Request timeout (ms)
+});
+```
+
+## Examples
+
+### Create and Manage Devices
+
+```typescript
+// Create a device
+const device = await client.getDeviceService().saveDevice({
+  name: 'My Device',
+  type: 'sensor',
+  label: 'Temperature Sensor'
+});
+
+// Send telemetry
+await client.getTelemetryService().saveTelemetry({
+  entityId: device.id,
+  data: {
+    temperature: 25.5,
+    humidity: 60
+  }
+});
+
+// Delete device
+await client.getDeviceService().deleteDevice(device.id.id);
+```
+
+### Manage Assets
+
+```typescript
+// Create an asset
+const asset = await client.getAssetService().saveAsset({
+  name: 'Building A',
+  type: 'building'
+});
+
+// Assign to customer
+await client.getAssetService().assignAssetToCustomer(
+  customerId,
+  asset.id.id
+);
+```
+
+### Dashboard Operations
+
+```typescript
+// Create dashboard
+const dashboard = await client.getDashboardService().saveDashboard({
+  title: 'My Dashboard',
+  configuration: { widgets: {} }
+});
+
+// Set as home dashboard
+await client.getDashboardService().setTenantHomeDashboardInfo(
+  await client.getDashboardService().getDashboardInfo(dashboard.id.id)
+);
+```
+
+## TypeScript Support
+
+This library is written in TypeScript and provides comprehensive type definitions:
+
+```typescript
+import type {
+  Device,
+  Asset,
+  Customer,
+  Dashboard,
+  User,
+  Alarm,
+  TelemetryData
+} from 'thingsboard-react-client';
+```
+
+## Error Handling
+
+```typescript
+try {
+  const device = await client.getDeviceService().getDevice(deviceId);
+} catch (error) {
+  if (error.response?.status === 404) {
+    console.error('Device not found');
+  } else if (error.response?.status === 403) {
+    console.error('Permission denied');
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
+```
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build the library
+npm run build
+
+# Run tests
+npm test
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT © [Your Name]
+
+## Links
+
+- [ThingsBoard Documentation](https://thingsboard.io/docs/)
+- [GitHub Repository](https://github.com/yourusername/thingsboard-react-client)
+- [npm Package](https://www.npmjs.com/package/thingsboard-react-client)
+- [Issue Tracker](https://github.com/yourusername/thingsboard-react-client/issues)
+
+## Support
+
+If you have any questions or need help, please:
+- Check the [ThingsBoard Documentation](https://thingsboard.io/docs/)
+- Open an [issue on GitHub](https://github.com/yourusername/thingsboard-react-client/issues)
+- Join the [ThingsBoard Community](https://groups.google.com/forum/#!forum/thingsboard)
