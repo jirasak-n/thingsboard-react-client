@@ -11,6 +11,10 @@ export * from './customer';
 export * from './dashboard';
 export * from './user';
 export * from './profile';
+export * from './query';
+export * from './contact';
+
+
 
 
 

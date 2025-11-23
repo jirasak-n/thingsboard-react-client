@@ -1,5 +1,5 @@
 import { ThingsboardClient } from '../ThingsboardClient';
-import { Customer } from '../model/customer';
+import { Customer, ShortCustomerInfo } from '../model/customer';
 import { PageData, PageLink } from '../model/page';
 
 export class CustomerService {
@@ -30,5 +30,17 @@ export class CustomerService {
 
     public async deleteCustomer(customerId: string): Promise<void> {
         return this.tbClient.delete(`/api/customer/${customerId}`);
+    }
+
+    public async getShortCustomerInfo(customerId: string): Promise<ShortCustomerInfo | null> {
+        return this.tbClient.get<ShortCustomerInfo>(`/api/customer/${customerId}/shortInfo`);
+    }
+
+    public async getCustomerTitle(customerId: string): Promise<string | null> {
+        return this.tbClient.get<string>(`/api/customer/${customerId}/title`);
+    }
+
+    public async getTenantCustomer(customerTitle: string): Promise<Customer | null> {
+        return this.tbClient.get<Customer>(`/api/tenant/customers?customerTitle=${customerTitle}`);
     }
 }

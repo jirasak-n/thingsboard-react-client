@@ -1,19 +1,18 @@
 import { EntityId, BaseData } from './entity';
+import { ContactBased } from './contact';
 
 export interface CustomerId extends EntityId {
     entityType: 'CUSTOMER';
 }
 
-export interface Customer extends BaseData<CustomerId> {
+export interface Customer extends ContactBased<CustomerId> {
     tenantId?: EntityId;
     title: string;
-    email?: string;
-    phone?: string;
-    country?: string;
-    state?: string;
-    city?: string;
-    address?: string;
-    address2?: string;
-    zip?: string;
-    additionalInfo?: any;
+    externalId?: CustomerId;
+}
+
+export interface ShortCustomerInfo {
+    customerId: CustomerId;
+    title: string;
+    isPublic: boolean;
 }

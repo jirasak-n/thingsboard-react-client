@@ -30,4 +30,28 @@ export class AssetProfileService {
         }
         return this.tbClient.get<PageData<AssetProfileInfo>>(url);
     }
+
+    public async getAssetProfile(assetProfileId: string): Promise<AssetProfile> {
+        return this.tbClient.get<AssetProfile>(`/api/assetProfile/${assetProfileId}`);
+    }
+
+    public async saveAssetProfile(assetProfile: AssetProfile): Promise<AssetProfile> {
+        return this.tbClient.post<AssetProfile>('/api/assetProfile', assetProfile);
+    }
+
+    public async deleteAssetProfile(assetProfileId: string): Promise<void> {
+        return this.tbClient.delete(`/api/assetProfile/${assetProfileId}`);
+    }
+
+    public async setDefaultAssetProfile(assetProfileId: string): Promise<void> {
+        return this.tbClient.post(`/api/assetProfile/${assetProfileId}/default`, {});
+    }
+
+    public async getDefaultAssetProfileInfo(): Promise<AssetProfileInfo> {
+        return this.tbClient.get<AssetProfileInfo>('/api/assetProfileInfo/default');
+    }
+
+    public async getAssetProfileInfo(assetProfileId: string): Promise<AssetProfileInfo> {
+        return this.tbClient.get<AssetProfileInfo>(`/api/assetProfileInfo/${assetProfileId}`);
+    }
 }
