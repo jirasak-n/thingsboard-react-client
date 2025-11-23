@@ -34,9 +34,7 @@ yarn add thingsboard-react-client
 import { ThingsboardClient } from 'thingsboard-react-client';
 
 // Initialize the client
-const client = new ThingsboardClient({
-  url: 'https://your-thingsboard-server.com'
-});
+const client = new ThingsboardClient('https://your-thingsboard-server.com');
 
 // Login
 await client.login({
@@ -85,9 +83,7 @@ function DeviceList() {
 ```typescript
 import { ThingsboardClient } from 'thingsboard-react-client';
 
-const client = new ThingsboardClient({
-  url: 'https://your-thingsboard-server.com'
-});
+const client = new ThingsboardClient('https://demo.thingsboard.io');
 
 await client.login({ username: 'user', password: 'pass' });
 
@@ -124,12 +120,13 @@ This library provides full coverage of the ThingsBoard REST API:
 ## Configuration
 
 ```typescript
-const client = new ThingsboardClient({
-  url: 'https://your-server.com',  // Required: ThingsBoard server URL
-  retryCount: 3,                   // Optional: Number of retry attempts
-  retryDelay: 1000,                // Optional: Delay between retries (ms)
-  timeout: 30000                   // Optional: Request timeout (ms)
-});
+// Basic initialization
+const client = new ThingsboardClient('https://your-server-url');
+
+// The client uses axios internally with default settings:
+// - Auto retry on network errors
+// - 30 second timeout
+// - JWT token auto-refresh
 ```
 
 ## Examples
@@ -239,7 +236,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT © [Your Name]
+MIT © Jirasak Nopparat
 
 ## Links
 
