@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { AuthUser, LoginResponse, RequestConfig } from './model';
+import { ConnectionStatus } from './model/telemetry';
 
 // Constants
 const REFRESH_TOKEN_URL = '/api/auth/token';
@@ -93,6 +94,15 @@ export class ThingsboardClient {
             this.telemetryService = new TelemetryWebsocketService(this);
         }
         return this.telemetryService;
+    }
+
+    public onTelemetryStatusChange(callback: (status: ConnectionStatus) => void) {
+        this.getTelemetryService().addStatusListener(callback);
+        return () => this.getTelemetryService().removeStatusListener(callback);
+    }
+
+    public getTelemetryStatus(): ConnectionStatus {
+        return this.getTelemetryService().getStatus();
     }
 
     public getDeviceService(): DeviceService {

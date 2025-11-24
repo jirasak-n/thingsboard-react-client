@@ -1,218 +1,226 @@
 export enum WsCmdType {
-  AUTH = 'AUTH',
-  ATTRIBUTES = 'ATTRIBUTES',
-  TIMESERIES = 'TIMESERIES',
-  TIMESERIES_HISTORY = 'TIMESERIES_HISTORY',
-  ENTITY_DATA = 'ENTITY_DATA',
-  ENTITY_COUNT = 'ENTITY_COUNT',
-  ALARM_DATA = 'ALARM_DATA',
-  ALARM_COUNT = 'ALARM_COUNT',
-  NOTIFICATIONS = 'NOTIFICATIONS',
-  NOTIFICATIONS_COUNT = 'NOTIFICATIONS_COUNT',
-  MARK_NOTIFICATIONS_AS_READ = 'MARK_NOTIFICATIONS_AS_READ',
-  MARK_ALL_NOTIFICATIONS_AS_READ = 'MARK_ALL_NOTIFICATIONS_AS_READ',
-  
-  ALARM_DATA_UNSUBSCRIBE = 'ALARM_DATA_UNSUBSCRIBE',
-  ENTITY_DATA_UNSUBSCRIBE = 'ENTITY_DATA_UNSUBSCRIBE',
-  ENTITY_COUNT_UNSUBSCRIBE = 'ENTITY_COUNT_UNSUBSCRIBE',
-  NOTIFICATIONS_UNSUBSCRIBE = 'NOTIFICATIONS_UNSUBSCRIBE'
+    AUTH = 'AUTH',
+    ATTRIBUTES = 'ATTRIBUTES',
+    TIMESERIES = 'TIMESERIES',
+    TIMESERIES_HISTORY = 'TIMESERIES_HISTORY',
+    ENTITY_DATA = 'ENTITY_DATA',
+    ENTITY_COUNT = 'ENTITY_COUNT',
+    ALARM_DATA = 'ALARM_DATA',
+    ALARM_COUNT = 'ALARM_COUNT',
+    NOTIFICATIONS = 'NOTIFICATIONS',
+    NOTIFICATIONS_COUNT = 'NOTIFICATIONS_COUNT',
+    MARK_NOTIFICATIONS_AS_READ = 'MARK_NOTIFICATIONS_AS_READ',
+    MARK_ALL_NOTIFICATIONS_AS_READ = 'MARK_ALL_NOTIFICATIONS_AS_READ',
+
+    ALARM_DATA_UNSUBSCRIBE = 'ALARM_DATA_UNSUBSCRIBE',
+    ENTITY_DATA_UNSUBSCRIBE = 'ENTITY_DATA_UNSUBSCRIBE',
+    ENTITY_COUNT_UNSUBSCRIBE = 'ENTITY_COUNT_UNSUBSCRIBE',
+    NOTIFICATIONS_UNSUBSCRIBE = 'NOTIFICATIONS_UNSUBSCRIBE'
+}
+
+export enum ConnectionStatus {
+    DISCONNECTED = 'DISCONNECTED',
+    CONNECTING = 'CONNECTING',
+    CONNECTED = 'CONNECTED',
+    RECONNECTING = 'RECONNECTING',
+    ERROR = 'ERROR'
 }
 
 export enum Aggregation {
-  MIN = 'MIN',
-  MAX = 'MAX',
-  AVG = 'AVG',
-  SUM = 'SUM',
-  COUNT = 'COUNT',
-  NONE = 'NONE'
+    MIN = 'MIN',
+    MAX = 'MAX',
+    AVG = 'AVG',
+    SUM = 'SUM',
+    COUNT = 'COUNT',
+    NONE = 'NONE'
 }
 
 export interface WebsocketCmd {
-  cmdId?: number;
-  type: string; // WsCmdType
+    cmdId?: number;
+    type: string; // WsCmdType
 }
 
 // --- Telemetry & Attributes ---
 
 export interface SubscriptionCmd extends WebsocketCmd {
-  entityType?: string;
-  entityId?: string;
-  keys?: string;
-  scope?: string;
-  unsubscribe?: boolean;
-  // For Timeseries
-  startTs?: number;
-  timeWindow?: number;
-  interval?: number;
-  limit?: number;
-  agg?: string;
+    entityType?: string;
+    entityId?: string;
+    keys?: string;
+    scope?: string;
+    unsubscribe?: boolean;
+    // For Timeseries
+    startTs?: number;
+    timeWindow?: number;
+    interval?: number;
+    limit?: number;
+    agg?: string;
 }
 
 // --- Entity Data Query Models ---
 
 export interface EntityDataCmd extends WebsocketCmd {
-  query?: EntityDataQuery;
-  historyCmd?: EntityHistoryCmd;
-  latestCmd?: LatestValueCmd;
-  tsCmd?: TimeSeriesCmd;
-  aggHistoryCmd?: AggHistoryCmd;
-  aggTsCmd?: AggTimeSeriesCmd;
+    query?: EntityDataQuery;
+    historyCmd?: EntityHistoryCmd;
+    latestCmd?: LatestValueCmd;
+    tsCmd?: TimeSeriesCmd;
+    aggHistoryCmd?: AggHistoryCmd;
+    aggTsCmd?: AggTimeSeriesCmd;
 }
 
 export interface EntityDataQuery {
-  entityFilter: EntityFilter;
-  pageLink: EntityDataPageLink;
-  entityFields?: EntityKey[];
-  latestValues?: EntityKey[];
-  keyFilters?: KeyFilter[];
+    entityFilter: EntityFilter;
+    pageLink: EntityDataPageLink;
+    entityFields?: EntityKey[];
+    latestValues?: EntityKey[];
+    keyFilters?: KeyFilter[];
 }
 
 export interface EntityFilter {
-  type: string;
-  singleEntity?: { entityType: string; id: string };
-  entityType?: string;
-  entityList?: string[];
-  entityNameFilter?: string;
-  deviceTypes?: string[];
-  resolveMultiple?: boolean;
+    type: string;
+    singleEntity?: { entityType: string; id: string };
+    entityType?: string;
+    entityList?: string[];
+    entityNameFilter?: string;
+    deviceTypes?: string[];
+    resolveMultiple?: boolean;
 }
 
 export interface EntityDataPageLink {
-  pageSize: number;
-  page: number;
-  textSearch?: string;
-  sortOrder?: EntityDataSortOrder;
-  dynamic?: boolean;
+    pageSize: number;
+    page: number;
+    textSearch?: string;
+    sortOrder?: EntityDataSortOrder;
+    dynamic?: boolean;
 }
 
 export interface EntityDataSortOrder {
-  key: EntityKey;
-  direction: 'ASC' | 'DESC';
+    key: EntityKey;
+    direction: 'ASC' | 'DESC';
 }
 
 export interface KeyFilter {
-  key: EntityKey;
-  valueType: string;
-  value?: any;
-  predicate?: any;
+    key: EntityKey;
+    valueType: string;
+    value?: any;
+    predicate?: any;
 }
 
 export interface EntityHistoryCmd {
-  keys: string[];
-  startTs: number;
-  endTs: number;
-  interval?: number;
-  limit?: number;
-  agg?: string;
+    keys: string[];
+    startTs: number;
+    endTs: number;
+    interval?: number;
+    limit?: number;
+    agg?: string;
 }
 
 export interface LatestValueCmd {
-  keys: EntityKey[];
+    keys: EntityKey[];
 }
 
 export interface TimeSeriesCmd {
-  keys: string[];
-  startTs: number;
-  timeWindow: number;
-  interval?: number;
-  limit?: number;
-  agg?: string; // Aggregation enum
+    keys: string[];
+    startTs: number;
+    timeWindow: number;
+    interval?: number;
+    limit?: number;
+    agg?: string; // Aggregation enum
 }
 
 export interface AggKey {
-  id: number;
-  key: string;
-  agg: string; // Aggregation enum
-  previousStartTs?: number;
-  previousEndTs?: number;
-  previousValueOnly?: boolean;
+    id: number;
+    key: string;
+    agg: string; // Aggregation enum
+    previousStartTs?: number;
+    previousEndTs?: number;
+    previousValueOnly?: boolean;
 }
 
 export interface AggHistoryCmd {
-  keys: AggKey[];
-  startTs: number;
-  endTs: number;
+    keys: AggKey[];
+    startTs: number;
+    endTs: number;
 }
 
 export interface AggTimeSeriesCmd {
-  keys: AggKey[];
-  startTs: number;
-  timeWindow: number;
+    keys: AggKey[];
+    startTs: number;
+    timeWindow: number;
 }
 
 export interface EntityKey {
-  type: string;
-  key: string;
+    type: string;
+    key: string;
 }
 
 // --- Entity Count Models ---
 
 export interface EntityCountCmd extends WebsocketCmd {
-  query?: EntityCountQuery;
+    query?: EntityCountQuery;
 }
 
 export interface EntityCountQuery {
-  entityFilter: EntityFilter;
-  keyFilters?: KeyFilter[];
+    entityFilter: EntityFilter;
+    keyFilters?: KeyFilter[];
 }
 
 // --- Alarm Data Models ---
 
 export interface AlarmDataCmd extends WebsocketCmd {
-  query?: AlarmDataQuery;
+    query?: AlarmDataQuery;
 }
 
 export interface AlarmDataQuery {
-  entityFilter?: EntityFilter;
-  pageLink?: AlarmDataPageLink;
-  alarmFields?: EntityKey[];
+    entityFilter?: EntityFilter;
+    pageLink?: AlarmDataPageLink;
+    alarmFields?: EntityKey[];
 }
 
 export interface AlarmDataPageLink extends EntityDataPageLink {
-  searchPropagatedAlarms?: boolean;
-  status?: string;
-  severityList?: string[];
-  typeList?: string[];
+    searchPropagatedAlarms?: boolean;
+    status?: string;
+    severityList?: string[];
+    typeList?: string[];
 }
 
 // --- Notification Models ---
 
 export interface NotificationsCmd extends WebsocketCmd {
-  limit?: number; // For UnreadSubCmd
-  notifications?: string[]; // For MarkAsReadCmd
+    limit?: number; // For UnreadSubCmd
+    notifications?: string[]; // For MarkAsReadCmd
 }
 
 // --- Updates / Responses ---
 
 export interface WebsocketDataMsg {
-  subscriptionId?: number;
-  cmdId?: number;
-  errorCode?: number;
-  errorMsg?: string;
-  
-  // Telemetry/Attributes update
-  data?: any;
-  latestValues?: any;
+    subscriptionId?: number;
+    cmdId?: number;
+    errorCode?: number;
+    errorMsg?: string;
 
-  // Entity/Alarm Data update
-  update?: any[];
-  cmdUpdateType?: string; // 'ENTITY_DATA', 'ALARM_DATA', 'NOTIFICATIONS', etc.
-  
-  // Count updates
-  count?: number;
-  totalUnreadCount?: number;
-  
-  // Notifications
-  notifications?: any[];
+    // Telemetry/Attributes update
+    data?: any;
+    latestValues?: any;
+
+    // Entity/Alarm Data update
+    update?: any[];
+    cmdUpdateType?: string; // 'ENTITY_DATA', 'ALARM_DATA', 'NOTIFICATIONS', etc.
+
+    // Count updates
+    count?: number;
+    totalUnreadCount?: number;
+
+    // Notifications
+    notifications?: any[];
 }
 
 // Alias interfaces for specific updates to satisfy hooks
-export interface EntityDataUpdate extends WebsocketDataMsg {}
-export interface AlarmDataUpdate extends WebsocketDataMsg {}
+export interface EntityDataUpdate extends WebsocketDataMsg { }
+export interface AlarmDataUpdate extends WebsocketDataMsg { }
 
 export interface TelemetrySubscriber {
-  subscriptionCommands: Array<SubscriptionCmd | EntityDataCmd | EntityCountCmd | AlarmDataCmd | NotificationsCmd | WebsocketCmd>;
-  onData?: (data: WebsocketDataMsg) => void;
-  onCmdUpdate?: (data: WebsocketDataMsg) => void; 
-  onReconnected?: () => void;
+    subscriptionCommands: Array<SubscriptionCmd | EntityDataCmd | EntityCountCmd | AlarmDataCmd | NotificationsCmd | WebsocketCmd>;
+    onData?: (data: WebsocketDataMsg) => void;
+    onCmdUpdate?: (data: WebsocketDataMsg) => void;
+    onReconnected?: () => void;
 }

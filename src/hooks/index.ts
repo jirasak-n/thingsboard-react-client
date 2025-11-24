@@ -3,4 +3,5 @@ export * from './useTelemetry';
 export * from './useEntityData';
 export * from './useAlarmData';
 export * from './useEntityCount';
+export * from './useTelemetryStatus';
 export * from './useNotifications';
